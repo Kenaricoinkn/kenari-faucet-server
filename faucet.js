@@ -4,15 +4,16 @@ const cors = require("cors");
 const { ethers } = require("ethers");
 
 const app = express();
-app.use(cors()); // ⬅️ penting untuk izinkan akses dari frontend
-app.use(express.json());
+app.use(cors()); // supaya bisa diakses dari web
+app.use(express.json()); // supaya bisa baca req.body
 
+// Load ENV
 const PORT = process.env.PORT || 3000;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.RPC_URL;
 const TOKEN_ADDRESS = process.env.TOKEN_CONTRACT;
 const CLAIM_AMOUNT = process.env.CLAIM_AMOUNT || "100";
-const CLAIM_DECIMALS = process.env.CLAIM_DECIMALS || 6;
+const CLAIM_DECIMALS = parseInt(process.env.CLAIM_DECIMALS || "6", 10); // ✅ fix decimals jadi number
 
 // Provider + wallet
 const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -24,7 +25,7 @@ const tokenAbi = [
 ];
 const token = new ethers.Contract(TOKEN_ADDRESS, tokenAbi, faucetWallet);
 
-// --- GET untuk cek server ---
+// --- GET untuk tes di browser ---
 app.get("/faucet", (req, res) => {
   res.json({ message: "✅ Faucet server alive, use POST to claim" });
 });
@@ -35,7 +36,9 @@ app.post("/faucet", async (req, res) => {
     const { address } = req.body;
     if (!address) return res.status(400).json({ error: "No address provided" });
 
+    // parseUnits dengan decimal 6
     const amount = ethers.parseUnits(CLAIM_AMOUNT.toString(), CLAIM_DECIMALS);
+
     const tx = await token.transfer(address, amount);
     await tx.wait();
 
@@ -51,4 +54,5 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Faucet server running on port ${PORT}`);
   console.log(`Faucet Wallet: ${faucetWallet.address}`);
   console.log(`Token KN: ${TOKEN_ADDRESS}`);
+  console.log(`Decimals: ${CLAIM_DECIMALS}`);
 });
