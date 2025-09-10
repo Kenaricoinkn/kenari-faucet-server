@@ -1,16 +1,18 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const { ethers } = require("ethers");
 
 const app = express();
-app.use(express.json()); // supaya bisa baca req.body
+app.use(cors()); // ⬅️ penting untuk izinkan akses dari frontend
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.RPC_URL;
 const TOKEN_ADDRESS = process.env.TOKEN_CONTRACT;
 const CLAIM_AMOUNT = process.env.CLAIM_AMOUNT || "100";
-const CLAIM_DECIMALS = Number(process.env.CLAIM_DECIMALS) || 6;
+const CLAIM_DECIMALS = process.env.CLAIM_DECIMALS || 6;
 
 // Provider + wallet
 const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -22,7 +24,7 @@ const tokenAbi = [
 ];
 const token = new ethers.Contract(TOKEN_ADDRESS, tokenAbi, faucetWallet);
 
-// --- GET untuk tes di browser ---
+// --- GET untuk cek server ---
 app.get("/faucet", (req, res) => {
   res.json({ message: "✅ Faucet server alive, use POST to claim" });
 });
