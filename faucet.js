@@ -36,11 +36,24 @@ app.post("/faucet", async (req, res) => {
     const { address } = req.body;
     if (!address) return res.status(400).json({ error: "No address provided" });
 
-    const decimals = parseInt(CLAIM_DECIMALS, 10); // ✅ sudah number
+    const now = Date.now();
+    const lastClaim = claimHistory[address] || 0;
+
+    // Cek cooldown
+    if (now - lastClaim < COOLDOWN) {
+      const waitMs = COOLDOWN - (now - lastClaim);
+      const waitMin = Math.ceil(waitMs / 60000);
+      return res.status(429).json({ error: `⏳ Please wait ${waitMin} minutes before next claim` });
+    }
+
+    const decimals = parseInt(CLAIM_DECIMALS, 10);
     const amount = ethers.parseUnits(CLAIM_AMOUNT.toString(), decimals);
 
     const tx = await token.transfer(address, amount);
     await tx.wait();
+
+    // Simpan timestamp claim terakhir
+    claimHistory[address] = now;
 
     res.json({ success: true, txHash: tx.hash });
   } catch (err) {
