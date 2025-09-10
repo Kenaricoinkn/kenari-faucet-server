@@ -29,7 +29,9 @@ const token = new ethers.Contract(TOKEN_ADDRESS, tokenAbi, faucetWallet);
 app.get("/faucet", (req, res) => {
   res.json({ message: "✅ Faucet server alive, use POST to claim" });
 });
-
+// --- Cooldown config ---
+const COOLDOWN = 24 * 60 * 60 * 1000; // 24 jam dalam ms
+const claimHistory = {}; // simpan data klaim per wallet address
 // --- POST untuk klaim token ---
 app.post("/faucet", async (req, res) => {
   try {
